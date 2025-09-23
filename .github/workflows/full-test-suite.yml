@@ -1,0 +1,68 @@
+name: Full Test Suite
+on:
+  # Manual trigger only
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - smoke
+        - api
+        - ui
+
+jobs:
+  full-tests:
+    name: Run Full Test Suite
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    env:
+      FGP_OWNER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_API_VERSION: ${{ vars.GH_API_VERSION || '2022-11-28' }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run Setup Tests
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'smoke' || inputs.test_type == 'api' || inputs.test_type == 'ui' }}
+      run: npm run test:setup
+        
+    - name: Run UI Tests
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'smoke' || inputs.test_type == 'ui' }}
+      run: npm run test:ui
+        
+    - name: Run API Tests
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'api' }}
+      run: npm run test:api
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: full-test-report-${{ github.run_number }}
+        path: playwright-report/
+        retention-days: 30
+        
+    - name: Upload Test Results (Raw)
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: full-test-results-${{ github.run_number }}
+        path: test-results/
+        retention-days: 30

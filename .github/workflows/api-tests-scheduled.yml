@@ -1,0 +1,54 @@
+name: API Tests - Scheduled
+on:
+  schedule:
+    # run twice daily at 2 AM and 2 PM UTC
+    - cron: '0 2,14 * * *'
+  # manual triggering
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    name: Run Comprehensive API Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    env:
+      FGP_OWNER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_API_VERSION: ${{ secrets.GH_API_VERSION || '2022-11-28' }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run Setup Tests
+      run: npm run test:setup
+        
+    - name: Run All API Tests
+      run: npm run test:api
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: api-test-report-${{ github.run_number }}
+        path: playwright-report/
+        retention-days: 30
+        
+    - name: Upload Test Results (Raw)
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: api-test-results-${{ github.run_number }}
+        path: test-results/
+        retention-days: 30
