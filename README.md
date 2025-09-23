@@ -55,8 +55,6 @@ Create a `.env` file with the following variables:
 ```bash
 
 GITHUB_TOKEN=ghp_your_token_here
-GIST_UI_USER_PASSWORD=credential_for_gist_ui_test
-GIST_UI_USER_EMAIL=credential_for_gist_ui_test
 GH_API_VERSION=2022-11-28
 API_BASE_URL=https://api.github.com
 ```
