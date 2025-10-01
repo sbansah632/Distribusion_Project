@@ -2,7 +2,7 @@ name: API Tests - Scheduled
 on:
   schedule:
     # run twice daily at 2 AM and 2 PM UTC
-    - cron: '0 2,14 * * *'
+    # - cron: '0 2,14 * * *'
   # manual triggering
   workflow_dispatch:
 
